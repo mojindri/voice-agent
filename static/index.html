@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Audio Agent</h1>
+        </header>
+
+        <main>
+            <div class="audio-controls">
+                <button id="recordToggleButton" class="button primary">
+                    <i class="fas fa-microphone"></i>
+                    <span>Start Recording</span>
+                </button>
+            </div>
+
+            <div class="response-container">
+                <div class="status">
+                    <div class="status-dot"></div>
+                    <span class="status-text">Ready</span>
+                </div>
+                <div class="response-header">
+                    <h2>Response</h2>
+                    <button id="playResponse" class="button secondary" disabled>
+                        <i class="fas fa-play"></i>
+                        <span>Play Response</span>
+                    </button>
+                </div>
+                <div id="responseText" class="response-text"></div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="metric-label">Processing Time:</span>
+                    <span id="processingTime" class="metric-value">0ms</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Audio Duration:</span>
+                    <span id="audioDuration" class="metric-value">0s</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="processingIndicator" class="processing-indicator" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
