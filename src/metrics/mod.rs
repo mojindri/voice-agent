@@ -10,11 +10,11 @@ impl Metrics {
     }
 
     pub fn record_request(&self) {
-        metrics::counter!("requests_total", 1);
+        metrics::counter!("requests_total").increment(1);
     }
 
     pub fn record_processing_time(&self, duration: Duration) {
-        metrics::histogram!("processing_time_seconds", duration.as_secs_f64());
+        metrics::histogram!("processing_time_seconds").record(duration.as_secs_f64());
     }
 }
 

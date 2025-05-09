@@ -15,7 +15,7 @@ use crate::api::{
 pub mod handlers;
 pub mod models;
 
-pub fn create_router(state: AppState) -> Router {
+pub fn  create_router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health_check))
         .route("/process_voice_agent", post(process_voice_agent))

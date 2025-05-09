@@ -11,11 +11,11 @@ use std::env;
 use tracing::{error, info};
 use uuid;
 
+use crate::audio::converter::webm_to_wav_bytes;
 use crate::{
     api::models::{
         AppState, AudioResponse, ChatGPTRequest, ChatGPTResponse, ChatMessage, HealthStatus,
     },
-    audio::converter::AudioConverter,
     error::AppError,
 };
 
@@ -43,14 +43,16 @@ pub async fn process_voice_agent(
     state.metrics.record_request();
     let start_time = std::time::Instant::now();
 
-    let (audio_data, session_id, conversation_history) = extract_audio_data_and_session(multipart).await?;
+    let (audio_data, session_id, conversation_history) =
+        extract_audio_data_and_session(multipart).await?;
 
     if audio_data.is_empty() {
         error!("No audio data received");
         return Err(anyhow::anyhow!("No audio data received").into());
     }
 
-    let (text, audio_response) = handle_voice_agent(&audio_data, &session_id, conversation_history, &state).await?;
+    let (text, audio_response) =
+        handle_voice_agent(&audio_data, &session_id, conversation_history, &state).await?;
 
     state.metrics.record_processing_time(start_time.elapsed());
 
@@ -109,6 +111,12 @@ async fn handle_voice_agent(
     mut conversation_history: Vec<ChatMessage>,
     _state: &AppState,
 ) -> Result<(String, Vec<u8>), AppError> {
+    if conversation_history.is_empty() {
+        conversation_history.push(ChatMessage {
+            role: "system".to_string(),
+            content: "You are a friendly and empathetic voice assistant. Speak naturally and conversationally, like a trusted friend. Keep responses concise but warm and engaging. Remember to maintain a friendly vibe in all interactions. Use a casual, approachable tone while staying helpful and informative. When appropriate, show personality and humor, but always prioritize being helpful and clear.".to_string(),
+        });
+    }
     let text = speech_to_text(audio_data).await?;
     let response = chat_with_gpt(&text, &mut conversation_history).await?;
     let audio_response = text_to_speech(&response).await?;
@@ -120,7 +128,7 @@ async fn speech_to_text(audio_data: &[u8]) -> Result<String, AppError> {
     let api_key =
         env::var("OPENAI_API_KEY").map_err(|_| anyhow::anyhow!("Missing OpenAI API key"))?;
 
-    let wav_data = AudioConverter::webm_to_wav_bytes(&audio_data)?;
+    let wav_data = webm_to_wav_bytes(audio_data)?;
 
     let response = client
         .post("https://api.openai.com/v1/audio/transcriptions")
@@ -168,9 +176,13 @@ async fn chat_with_gpt(
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&request)
         .send()
-        .await?
-        .json::<ChatGPTResponse>()
         .await?;
+
+    // Add debug logging
+    let response_text = response.text().await?;
+    error!("API Response: {}", response_text);
+
+    let response: ChatGPTResponse = serde_json::from_str(&response_text)?;
 
     let assistant_message = response.choices[0].message.content.clone();
 
@@ -193,7 +205,8 @@ async fn text_to_speech(text: &str) -> Result<Vec<u8>, AppError> {
         .json(&serde_json::json!({
             "model": "gpt-4o-mini-tts", // tts-1
             "input": text,
-            "voice": "alloy"
+            "voice": "sage",
+            "vibe" :"Friendly"
         }))
         .send()
         .await?
